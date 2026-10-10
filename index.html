@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07070c"><meta name="description" content="LUXORA — демонстрационный игровой зал с виртуальными монетами. Только развлечение, без реальных денег.">
+  <title>LUXORA — игровой зал</title><link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div id="site-loader"><div><div class="loader-logo">LUXORA</div><div class="loader-ring"></div></div></div>
+  <canvas data-particles style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.65"></canvas>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">✦</span><span class="brand-name">LUX<span>ORA</span></span></a>
+    <nav class="main-nav" data-main-nav aria-label="Основная навигация"><a class="nav-link" href="index.html">⌂ Главная</a><a class="nav-link" href="mines.html">▦ Мины</a><a class="nav-link" href="aviator.html">✈ Самолёт</a><a class="nav-link" href="roulette.html">◉ Рулетка</a><a class="nav-link" href="poker.html">♠ Покер</a><a class="nav-link" href="slots.html">✧ Слоты</a></nav>
+    <div class="header-actions"><div class="balance-pill"><span class="coin-icon">◈</span><div><span class="balance-label">Демо-баланс</span><span class="balance-value" data-balance>5 000</span></div></div><button class="icon-btn" data-demo-bonus title="Добавить 5 000 виртуальных монет" aria-label="Пополнить демо-баланс">＋</button><a class="icon-btn" href="profile.html" aria-label="Профиль" title="Профиль">♙</a><button class="icon-btn" data-sound-toggle aria-label="Выключить звук" title="Звук">♫</button><button class="mobile-toggle" data-mobile-toggle aria-label="Открыть меню" aria-expanded="false">☰</button></div>
+  </div></header>
+  <main class="page-shell">
+    <section class="home-hero">
+      <div class="home-copy"><div class="eyebrow">Виртуальный игровой зал · версия 1.0</div><h1 class="home-title"><span class="gradient-text">ИГРАЙ</span><br><span class="outline">ЯРЧЕ.</span></h1><p>Твой вечер — твои правила. Открой коллекцию мини-игр, испытай удачу и собирай игровые достижения. Только виртуальные монеты, никаких платежей и вывода средств.</p><div class="hero-actions"><a class="btn btn-primary" href="mines.html">✦ Начать играть <span>↗</span></a><a class="btn btn-secondary" href="#games">Исследовать игры ↓</a></div><div class="hero-stats"><div class="hero-stat"><strong>06</strong><span>мини-игр</span></div><div class="hero-stat"><strong>5 000</strong><span>стартовых монет</span></div><div class="hero-stat"><strong>100%</strong><span>демо-режим</span></div></div></div>
+      <div class="hero-visual" aria-hidden="true"><div class="hero-orbit"></div><div class="hero-orbit orbit-two"></div><div class="hero-chip"><span>LX</span></div><div class="hero-float one"><span class="muted">ТВОЯ СЕССИЯ</span><strong style="color:var(--green)">● Активна</strong></div><div class="hero-float two"><span class="muted">ИГРОВОЙ БАЛАНС</span><strong style="color:var(--gold)">◈ <span data-balance>5 000</span></strong></div></div>
+    </section>
+    <div class="ticker" aria-label="Демонстрационная анимационная лента"><div class="ticker-label">ДЕМО-ЛЕНТА</div><div class="ticker-track" id="demo-ticker"></div></div>
+    <section class="section" id="games"><div class="section-heading"><div><div class="eyebrow">Выбери свой режим</div><h2>Игровая коллекция</h2></div><p>Каждая игра использует только виртуальные монеты</p></div>
+      <div class="game-grid">
+        <a class="game-card" href="mines.html" style="--glow:rgba(0,229,242,.24)"><div class="game-art"><span class="game-symbol">💎</span></div><div class="game-card-content"><h3>Мины</h3><p>Открывай безопасные клетки и следи за множителем.</p><div class="game-card-footer"><span class="pill">Стратегия</span><span class="game-arrow">↗</span></div></div></a>
+        <a class="game-card" href="aviator.html" style="--glow:rgba(255,85,121,.22)"><div class="game-art"><span class="game-symbol">✈️</span></div><div class="game-card-content"><h3>Самолёт</h3><p>Наблюдай за полётом и успей зафиксировать очки.</p><div class="game-card-footer"><span class="pill">Реакция</span><span class="game-arrow">↗</span></div></div></a>
+        <a class="game-card" href="roulette.html" style="--glow:rgba(255,215,106,.22)"><div class="game-art"><span class="game-symbol">🎡</span></div><div class="game-card-content"><h3>Рулетка</h3><p>Европейское колесо и классические игровые поля.</p><div class="game-card-footer"><span class="pill">Случайность</span><span class="game-arrow">↗</span></div></div></a>
+        <a class="game-card" href="poker.html" style="--glow:rgba(65,230,162,.2)"><div class="game-art"><span class="game-symbol">🂡</span></div><div class="game-card-content"><h3>Видеопокер</h3><p>Раздача из пяти карт и комбинации классического покера.</p><div class="game-card-footer"><span class="pill">Карты</span><span class="game-arrow">↗</span></div></div></a>
+        <a class="game-card" href="slots.html" style="--glow:rgba(157,78,221,.26)"><div class="game-art"><span class="game-symbol">🎰</span></div><div class="game-card-content"><h3>Слоты</h3><p>Пять барабанов, символы и виртуальный джекпот.</p><div class="game-card-footer"><span class="pill">Аркада</span><span class="game-arrow">↗</span></div></div></a>
+        <a class="game-card" href="profile.html" style="--glow:rgba(0,229,242,.16)"><div class="game-art"><span class="game-symbol">🏆</span></div><div class="game-card-content"><h3>Профиль</h3><p>История сессий, динамика баланса и игровые значки.</p><div class="game-card-footer"><span class="pill">Статистика</span><span class="game-arrow">↗</span></div></div></a>
+      </div>
+    </section>
+    <section class="section"><div class="section-heading"><div><div class="eyebrow">Комфортная игра</div><h2>Здесь всё по-игровому</h2></div></div><div class="feature-strip"><div class="feature-card"><div class="feature-icon">◈</div><div><strong>Только демо-монеты</strong><span>Нельзя купить, продать или вывести.</span></div></div><div class="feature-card"><div class="feature-icon">↻</div><div><strong>Сохранение прогресса</strong><span>Баланс и история остаются в браузере.</span></div></div><div class="feature-card"><div class="feature-icon">♫</div><div><strong>Звук под контролем</strong><span>Включай и выключай звуковые эффекты.</span></div></div></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-inner"><a class="brand" href="index.html"><span class="brand-mark">✦</span><span class="brand-name">LUX<span>ORA</span></span></a><span>Учебный фронтенд-проект · все игровые результаты сгенерированы локально.</span><div class="footer-links"><a href="profile.html">Профиль</a><a href="mines.html">Игры</a></div></div></footer>
+  <div class="disclaimer-fixed">18+ Только для развлечения. Виртуальная валюта. Реальные деньги не используются и не выводятся.</div>
+  <div id="disclaimer" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title"><div class="disclaimer-card glass"><div class="disclaimer-icon">✦</div><div class="eyebrow" style="justify-content:center">Перед началом</div><h2 id="disclaimer-title">Добро пожаловать в <span class="gradient-text">LUXORA</span></h2><p>Это игрушечный симулятор для развлечения и обучения. Все монеты виртуальные, не имеют денежной ценности, а результаты генерируются прямо в браузере. Платежей, денежных ставок и вывода средств нет.</p><p><strong>18+ Только для развлечения.</strong></p><button class="btn btn-primary" data-disclaimer-accept>Понимаю, играть в развлекательном режиме</button><div class="disclaimer-foot">Продолжая, ты подтверждаешь, что ознакомился с условиями демо-режима.</div></div></div>
+  <script src="common.js"></script><script>
+    // This ticker is deliberately synthetic; it is labelled as a demo feed.
+    const demoItems = [['Игрок LX-04','1 250','x2.5'],['Игрок NOVA','480','x1.6'],['Игрок PIXEL','2 100','x4.2'],['Игрок ORBIT','760','x1.9'],['Игрок ECHO','3 300','x3.3'],['Игрок MINT','520','x1.3']];
+    const itemHTML = demoItems.map(([name,coins,multi])=>`<div class="ticker-item">${name} <span>· демо-результат</span> <strong>+${coins} ◈</strong> <span>${multi}</span></div>`).join('');
+    const ticker = document.getElementById('demo-ticker'); ticker.innerHTML = itemHTML + itemHTML;
+  </script>
+</body></html>
