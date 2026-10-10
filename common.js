@@ -1,7 +1,7 @@
 /* LUXORA shared app logic: demo balance, local history, sounds, transitions and UI. */
 (() => {
   'use strict';
-  const KEYS = { balance: 'luxora_demo_balance_v1', history: 'luxora_demo_history_v1', snapshots: 'luxora_demo_snapshots_v1', sound: 'luxora_demo_sound_v1', disclaimer: 'luxora_demo_disclaimer_v1' };
+  const KEYS = { balance: 'luxora_demo_balance_v1', history: 'luxora_demo_history_v1', snapshots: 'luxora_demo_snapshots_v1', sound: 'luxora_demo_sound_v1', disclaimer: 'luxora_demo_disclaimer_v1', daily: 'luxora_daily_progress_v1' };
   const START_BALANCE = 5000;
   const safeParse = (raw, fallback) => { try { const parsed = JSON.parse(raw); return parsed ?? fallback; } catch { return fallback; } };
   const readHistory = () => safeParse(localStorage.getItem(KEYS.history), []);
@@ -115,11 +115,103 @@
     const canvas = document.querySelector('[data-particles]'); if (!canvas) return;
     const ctx = canvas.getContext('2d'); let w, h, particles = [], mouse = { x: -500, y: -500 };
     const resize = () => { const ratio = Math.min(devicePixelRatio || 1, 2); w = canvas.clientWidth = innerWidth; h = canvas.clientHeight = innerHeight; canvas.width = w * ratio; canvas.height = h * ratio; ctx.setTransform(ratio, 0, 0, ratio, 0, 0); particles = Array.from({ length: Math.min(65, Math.floor(w / 20)) }, () => ({ x: Math.random() * w, y: Math.random() * h, r: .6 + Math.random() * 1.7, vy: .12 + Math.random() * .42, vx: (Math.random() - .5) * .18, alpha: .13 + Math.random() * .3, color: Math.random() > .7 ? '#ffd76a' : Math.random() > .5 ? '#9d4edd' : '#00e5f2' })); };
-    const draw = () => { ctx.clearRect(0, 0, w, h); particles.forEach(p => { p.y += p.vy; p.x += p.vx; if (p.y > h + 3) { p.y = -4; p.x = Math.random() * w; } if (p.x < -4) p.x = w + 4; if (p.x > w + 4) p.x = -4; const dx = p.x - mouse.x, dy = p.y - mouse.y; const distance = Math.hypot(dx, dy); if (distance < 100) { p.x += dx / distance * .5; p.y += dy / distance * .5; } ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.shadowBlur = 8; ctx.shadowColor = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1; ctx.shadowBlur = 0; requestAnimationFrame(draw); };
+    const draw = () => { ctx.clearRect(0, 0, w, h); particles.forEach(p => { p.y += p.vy; p.x += p.vx; if (p.y > h + 3) { p.y = -4; p.x = Math.random() * w; } if (p.x < -4) p.x = w + 4; if (p.x > w + 4) p.x = -4; const dx = p.x - mouse.x, dy = p.y - mouse.y; const distance = Math.hypot(dx, dy); if (distance < 100 && distance > 0) { p.x += dx / distance * .5; p.y += dy / distance * .5; } ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.shadowBlur = 8; ctx.shadowColor = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1; ctx.shadowBlur = 0; requestAnimationFrame(draw); };
     window.addEventListener('resize', resize); window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }); resize(); draw();
   };
   const countUp = (node, to, suffix = '') => { const from = Number(node.dataset.from || 0); const start = performance.now(); const duration = 850; const tick = t => { const p = Math.min(1, (t - start) / duration); const n = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))); node.textContent = format(n) + suffix; if (p < 1) requestAnimationFrame(tick); else node.dataset.from = String(to); }; requestAnimationFrame(tick); };
-  document.addEventListener('DOMContentLoaded', () => { initLoader(); initHeader(); initDisclaimer(); initParticles(); });
-  window.Luxora = { KEYS, START_BALANCE, format, getBalance, setBalance, addBalance, spend, record, getHistory, getSnapshots, toast, playTone, toggleSound, confetti, bonus, countUp };
+
+  // Daily challenges award cosmetic XP only. They never add demo coins or
+  // depend on a wager, a payout, or a game outcome.
+  const DAILY_QUESTS = [
+    { id: 'checkin', icon: '☀', title: 'Ежедневный визит', description: 'Зайди в LUXORA сегодня.', reward: 10, href: 'index.html#daily-quests', kind: 'visit' },
+    { id: 'explorer', icon: '🧭', title: 'Исследователь', description: 'Открой две разные мини-игры.', reward: 25, href: 'index.html#games', kind: 'games' },
+    { id: 'profile', icon: '♙', title: 'Загляни в профиль', description: 'Посети страницу своей статистики.', reward: 15, href: 'profile.html', kind: 'profile' }
+  ];
+  const todayKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const dayNumber = key => { const [y,m,d] = String(key || '').split('-').map(Number); return y && m && d ? Math.floor(Date.UTC(y,m-1,d) / 86400000) : 0; };
+  const initialDailyState = () => ({ lastSeen: '', streak: 0, bestStreak: 0, xp: 0, activeDays: [], visits: {}, claims: {} });
+  const readDailyState = () => {
+    const saved = safeParse(localStorage.getItem(KEYS.daily), {});
+    return { ...initialDailyState(), ...(saved && typeof saved === 'object' ? saved : {}), visits: saved?.visits || {}, claims: saved?.claims || {}, activeDays: Array.isArray(saved?.activeDays) ? saved.activeDays : [] };
+  };
+  const writeDailyState = state => { store(KEYS.daily, state); window.dispatchEvent(new CustomEvent('luxora:daily', { detail: getDailyState() })); };
+  const getDailyState = () => {
+    const state = readDailyState(); const today = todayKey(); const visits = Array.isArray(state.visits[today]) ? state.visits[today] : [];
+    const claimed = Array.isArray(state.claims[today]) ? state.claims[today] : [];
+    const gamePages = new Set(visits.filter(page => ['mines.html','aviator.html','roulette.html','poker.html','slots.html'].includes(page)));
+    const quests = DAILY_QUESTS.map(quest => {
+      const complete = quest.kind === 'visit' ? state.lastSeen === today : quest.kind === 'games' ? gamePages.size >= 2 : visits.includes('profile.html');
+      return { ...quest, complete, claimed: claimed.includes(quest.id), progress: quest.kind === 'games' ? Math.min(gamePages.size, 2) : complete ? 1 : 0, target: quest.kind === 'games' ? 2 : 1 };
+    });
+    return { ...state, today, todayVisits: visits, gameCount: gamePages.size, quests, xp: Math.max(0, Number(state.xp) || 0), streak: Math.max(0, Number(state.streak) || 0), bestStreak: Math.max(0, Number(state.bestStreak) || 0) };
+  };
+  const markDailyVisit = page => {
+    const state = readDailyState(); const today = todayKey();
+    if (state.lastSeen !== today) {
+      const gap = state.lastSeen ? dayNumber(today) - dayNumber(state.lastSeen) : 0;
+      state.streak = gap === 1 ? Math.max(0, Number(state.streak) || 0) + 1 : 1;
+      state.bestStreak = Math.max(Number(state.bestStreak) || 0, state.streak);
+      state.lastSeen = today;
+      state.activeDays = [...new Set([...(state.activeDays || []), today])].slice(-30);
+      // Keep old daily records bounded; only recent activity is relevant to quests.
+      for (const key of Object.keys(state.visits || {})) if (dayNumber(today) - dayNumber(key) > 14) delete state.visits[key];
+      for (const key of Object.keys(state.claims || {})) if (dayNumber(today) - dayNumber(key) > 30) delete state.claims[key];
+    }
+    state.visits[today] = Array.isArray(state.visits[today]) ? state.visits[today] : [];
+    if (page && !state.visits[today].includes(page)) state.visits[today].push(page);
+    writeDailyState(state);
+  };
+  const claimDailyQuest = id => {
+    const state = readDailyState(); const today = todayKey();
+    const visits = Array.isArray(state.visits[today]) ? state.visits[today] : [];
+    const gameCount = new Set(visits.filter(page => ['mines.html','aviator.html','roulette.html','poker.html','slots.html'].includes(page))).size;
+    const quest = DAILY_QUESTS.find(item => item.id === id); if (!quest) return false;
+    const isComplete = quest.kind === 'visit' ? state.lastSeen === today : quest.kind === 'games' ? gameCount >= 2 : visits.includes('profile.html');
+    state.claims[today] = Array.isArray(state.claims[today]) ? state.claims[today] : [];
+    if (!isComplete || state.claims[today].includes(id)) return false;
+    state.claims[today].push(id); state.xp = Math.max(0, Number(state.xp) || 0) + quest.reward;
+    writeDailyState(state); toast(`Задание выполнено: +${quest.reward} XP`, 'success'); playTone('win');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches === false) confetti(28);
+    return true;
+  };
+  const makeDailyPanel = () => {
+    const panel = document.createElement('section'); panel.id = 'daily-quests'; panel.className = 'daily-panel glass panel section'; panel.setAttribute('aria-labelledby', 'daily-title');
+    panel.innerHTML = `<div class="daily-top"><div><div class="eyebrow">Твой ежедневный маршрут</div><h2 id="daily-title">Задания <span class="gradient-text">на сегодня</span></h2><p class="muted daily-lead">Небольшие цели для исследования сайта. Награды — только очки опыта, баланс не меняется.</p></div><a class="btn btn-secondary btn-sm" href="profile.html">Мой профиль ↗</a></div><div class="daily-layout"><div class="streak-card"><div class="streak-flare">✦</div><div class="streak-overline">СЕРИЯ ВИЗИТОВ</div><div class="streak-number"><span id="daily-streak">0</span><small>дней</small><span class="streak-fire">🔥</span></div><div class="streak-sub">Лучшая серия: <strong id="daily-best">0</strong> дн.</div><div class="streak-week" id="daily-week" aria-label="Активность за последние семь дней"></div><div class="streak-foot"><span>⚡ <strong id="daily-xp">0</strong> XP</span><span id="daily-claimed">0 / 3 получено</span></div></div><div class="daily-quest-list" id="daily-quest-list"></div></div>`;
+    return panel;
+  };
+  const renderDailyPanel = () => {
+    const existing = document.getElementById('daily-quests'); if (!existing) return;
+    const state = getDailyState();
+    const streakNode = document.getElementById('daily-streak'); if (!streakNode) return;
+    streakNode.textContent = state.streak; document.getElementById('daily-best').textContent = state.bestStreak; document.getElementById('daily-xp').textContent = format(state.xp);
+    const claimedCount = state.quests.filter(q => q.claimed).length; document.getElementById('daily-claimed').textContent = `${claimedCount} / ${state.quests.length} получено`;
+    const week = document.getElementById('daily-week'); const active = new Set(state.activeDays || []); week.innerHTML = '';
+    const today = new Date(); const labels = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    for (let offset = 6; offset >= 0; offset--) { const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - offset); const key = todayKey(date); const day = document.createElement('div'); day.className = `streak-day ${active.has(key) ? 'is-active' : ''} ${offset === 0 ? 'is-today' : ''}`; day.innerHTML = `<span>${labels[date.getDay()]}</span><i>${active.has(key) ? '✦' : '·'}</i>`; week.appendChild(day); }
+    const list = document.getElementById('daily-quest-list'); list.innerHTML = '';
+    state.quests.forEach(quest => {
+      const row = document.createElement('article'); row.className = `daily-quest ${quest.claimed ? 'is-claimed' : quest.complete ? 'is-complete' : ''}`;
+      const pct = Math.round(quest.progress / quest.target * 100);
+      let action = quest.claimed ? `<span class="quest-status claimed">✓ Получено</span>` : quest.complete ? `<button class="btn btn-primary btn-sm" type="button" data-quest-claim="${quest.id}">Забрать +${quest.reward} XP</button>` : `<a class="quest-link" href="${quest.href}">${quest.kind === 'profile' ? 'Открыть профиль ↗' : quest.kind === 'games' ? 'Выбрать игру ↗' : 'На главную ↗'}</a>`;
+      row.innerHTML = `<div class="quest-icon">${quest.icon}</div><div class="quest-content"><div class="quest-title-row"><strong>${quest.title}</strong><span class="quest-reward">+${quest.reward} XP</span></div><p>${quest.description}</p><div class="quest-progress"><span style="width:${pct}%"></span></div><div class="quest-foot"><span>${quest.progress} / ${quest.target}</span>${action}</div></div>`;
+      list.appendChild(row);
+    });
+  };
+  const initDailyQuests = () => {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    markDailyVisit(page);
+    const nav = document.querySelector('[data-main-nav]');
+    if (nav && !nav.querySelector('[data-daily-nav]')) { const link = document.createElement('a'); link.className = 'nav-link daily-nav-link'; link.href = 'index.html#daily-quests'; link.textContent = '⚡ Задания'; link.dataset.dailyNav = 'true'; nav.appendChild(link); }
+    if (page === 'index.html' || page === '') {
+      const hero = document.querySelector('.home-hero'); if (hero && !document.getElementById('daily-quests')) hero.insertAdjacentElement('afterend', makeDailyPanel());
+    } else if (page === 'profile.html') {
+      const hero = document.querySelector('.page-hero'); if (hero && !document.getElementById('daily-quests')) hero.insertAdjacentElement('afterend', makeDailyPanel());
+    }
+    document.addEventListener('click', event => { const button = event.target.closest('[data-quest-claim]'); if (!button) return; claimDailyQuest(button.dataset.questClaim); renderDailyPanel(); });
+    window.addEventListener('luxora:daily', renderDailyPanel);
+    renderDailyPanel();
+  };
+  document.addEventListener('DOMContentLoaded', () => { initLoader(); initHeader(); initDisclaimer(); initParticles(); initDailyQuests(); });
+  window.Luxora = { KEYS, START_BALANCE, format, getBalance, setBalance, addBalance, spend, record, getHistory, getSnapshots, toast, playTone, toggleSound, confetti, bonus, countUp, getDailyState, claimDailyQuest, markDailyVisit };
   window.addEventListener('storage', event => { if (event.key === KEYS.balance) updateBalanceDisplays(Number(event.oldValue) || 0, Number(event.newValue) || 0); });
 })();
